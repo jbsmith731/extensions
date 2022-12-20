@@ -29,6 +29,7 @@
     "@raycast/api": "^1.40.1",
     "@raycast/utils": "^1.4.8",
     "axios": "^0.23.0",
+    "swr": "^2.0.0",
     "url-join": "4.0.1"
   },
   "devDependencies": {

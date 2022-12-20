@@ -1,34 +1,28 @@
 import { Action, ActionPanel, Detail, Icon, List, showToast, Toast } from "@raycast/api";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import * as React from "react";
 import urljoin from "url-join";
 import { useFetch } from "@raycast/utils";
+import useSWR from "swr";
 
 export default function MDNSearchResultsList() {
-  const [query, setQuery] = useState<null | string>(null);
-  const [state, setState] = useState<Result[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [locale, setLocale] = useState<string>("en-us");
+  const [query, setQuery] = React.useState<null | string>(null);
+  const [locale, setLocale] = React.useState<string>("en-us");
 
-  useEffect(() => {
-    async function fetch() {
-      if (!query) {
-        setState([]);
-        return;
-      }
-      setIsLoading(true);
-      const results = await searchMDNByQuery(query, locale);
-      setState(results);
-      setIsLoading(false);
-    }
-    fetch();
-  }, [query, locale]);
+  const {
+    data: state,
+    isLoading,
+    mutate,
+  } = useSWR([query, locale], !query ? null : ([query, locale]) => searchMDNByQuery(query as string, locale));
 
   return (
     <List
       isLoading={isLoading}
       searchBarPlaceholder="Type to search MDN..."
-      onSearchTextChange={(text) => setQuery(text)}
+      onSearchTextChange={(text) => {
+        setQuery(text);
+        mutate();
+      }}
       throttle
       searchBarAccessory={
         <List.Dropdown
@@ -36,6 +30,7 @@ export default function MDNSearchResultsList() {
           storeValue={true}
           onChange={(newValue) => {
             setLocale(newValue);
+            mutate();
           }}
         >
           {locales.map((loc) => (
@@ -44,7 +39,7 @@ export default function MDNSearchResultsList() {
         </List.Dropdown>
       }
     >
-      {state.map((result, idx) => (
+      {state?.map((result, idx) => (
         <List.Item
           key={idx}
           title={result.title}
